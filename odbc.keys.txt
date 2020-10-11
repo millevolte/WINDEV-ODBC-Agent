@@ -1,0 +1,13 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\SOFTWARE\ODBC\ODBC.INI]
+
+[HKEY_CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources]
+"WINDEV"="HFSQL"
+
+[HKEY_CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\WINDEV]
+"Driver"="C:\\Program Files (x86)\\Common Files\\PC SOFT\\24.0\\ODBC\\Win32x86\\wd240hfo.dll"
+"RepFic"="C:\\Users\\fuzzy\\OneDrive\\Desktop\\DatiCC\\DatiCC\\"
+"PWDXX"=""
+"IntegrityCheck"="0"
+"Encryption"=""
