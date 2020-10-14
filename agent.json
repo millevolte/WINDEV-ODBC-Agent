@@ -1,5 +1,5 @@
 {
-  "Config": "pippone_SA.json",
-  "DB": "DatiCC",
+  "Config": "company.json",
+  "DB": "C:\\Users\\fuzzy\\OneDrive\\Desktop\\DatiCC\\DatiCC",
   "Driver": "C:\\Program Files (x86)\\Common Files\\PC SOFT\\24.0\\ODBC\\Win32x86\\wd240hfo.dll"
 }

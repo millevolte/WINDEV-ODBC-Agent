@@ -7,11 +7,27 @@ import (
 	"odbc/rest"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"
 )
+
+var watcher *fsnotify.Watcher
+
+// watchDir gets run as a walk func, searching for directories to add watchers to
+func watchDir(path string, fi os.FileInfo, err error) error {
+
+	// since fsnotify can watch all the files in a directory, watchers only need
+	// to be added to each nested directory
+	if fi.Mode().IsDir() {
+		return watcher.Add(path)
+	}
+
+	return nil
+}
 
 // our clean up procedure and exiting the program.
 func SetupCloseHandler() {
@@ -25,10 +41,31 @@ func SetupCloseHandler() {
 }
 
 func main() {
+	// creates a new file watcher
+	watcher, _ = fsnotify.NewWatcher()
+	defer watcher.Close()
 
 	config, restConfig := rest.LoadConfig()
 
 	rest.UpdateDSN(restConfig.UUID, config.DB, config.Driver)
+
+	if err := filepath.Walk(config.DB, watchDir); err != nil {
+		fmt.Println("ERROR", err)
+	}
+
+	go func() {
+		for {
+			select {
+			// watch for events
+			case event := <-watcher.Events:
+				fmt.Printf("Watcher: %s\n", event.Name)
+				rest.Watcher(event.Name, restConfig)
+				// watch for errors
+			case err := <-watcher.Errors:
+				fmt.Println("WATCHER ERROR", err)
+			}
+		}
+	}()
 
 	SetupCloseHandler()
 
@@ -88,7 +125,10 @@ func main() {
 
 			case <-time.After(time.Second * 5):
 			}
+
 			return
 		}
+
 	}
+
 }

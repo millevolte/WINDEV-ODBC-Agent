@@ -66,11 +66,11 @@ func LoadConfig() (agentConfig, RestConfig) {
 
 	abs := filepath.IsAbs(a.DB)
 	if abs {
-		fileinfo, err := os.Stat(a.DB)
+		_, err := os.Stat(a.DB)
 		if os.IsNotExist(err) {
 			log.Fatal("File " + a.DB + ": Impossibile trovare il file specificato.")
 		}
-		fmt.Println("DataBase Dir is ABSOLUTE: ", fileinfo)
+		fmt.Println("DataBase Dir is ABSOLUTE: ", a.DB)
 	} else {
 		dir, err := os.Getwd()
 		if err != nil {
@@ -156,8 +156,25 @@ func Boot(agent RestConfig) {
 	}
 }
 
-func Process() {
+func Watcher(file string, agent RestConfig) {
+	m := command{
+		Cmd:   "watcher",
+		Data:  file,
+		Id:    0,
+		Agent: agent.UUID,
+	}
+	j, err := json.Marshal(m)
+	if err != nil {
+		fmt.Println(err)
+	}
 
+	err = apiConnection.WriteMessage(websocket.TextMessage, j)
+	if err != nil {
+		fmt.Println("Errore scrittura: ", err)
+	}
+}
+
+func Process() {
 	done := make(chan struct{})
 	go func() {
 		defer func() {
