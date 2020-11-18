@@ -2,7 +2,6 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -62,7 +61,7 @@ func LoadConfig() (agentConfig, RestConfig) {
 		panic(err)
 	}
 
-	fmt.Println("Configuration File: ", a.Config)
+	log.Println("Configuration File: ", a.Config)
 
 	abs := filepath.IsAbs(a.DB)
 	if abs {
@@ -70,7 +69,7 @@ func LoadConfig() (agentConfig, RestConfig) {
 		if os.IsNotExist(err) {
 			log.Fatal("File " + a.DB + ": Impossibile trovare il file specificato.")
 		}
-		fmt.Println("DataBase Dir is ABSOLUTE: ", a.DB)
+		log.Println("DataBase Dir is ABSOLUTE: ", a.DB)
 	} else {
 		dir, err := os.Getwd()
 		if err != nil {
@@ -81,7 +80,7 @@ func LoadConfig() (agentConfig, RestConfig) {
 			log.Fatal("File " + dir + `\` + a.DB + ": Impossibile trovare il file specificato.")
 		}
 		a.DB = dir + `\` + a.DB
-		fmt.Println("DataBase Dir is RELATIVE: ", a.DB)
+		log.Println("DataBase Dir is RELATIVE: ", a.DB)
 	}
 
 	config, err = ioutil.ReadFile("./" + a.Config)
@@ -102,27 +101,27 @@ func ConnectApiStatus() (bool, bool) {
 func ConnectApi(api *url.URL, agent RestConfig) *websocket.Conn {
 	//*addr
 	apiConnectedInProgress = true
-	u := url.URL{Scheme: api.Scheme, Host: api.Host, Path: "/ws"}
-	fmt.Printf("Connessione a %s\n", u.String())
+	u := url.URL{Scheme: api.Scheme, Host: api.Host, Path: "/odbc"}
+	log.Printf("Connessione a %s\n", u.String())
 	firstTentative := true
 	for {
 		if firstTentative {
 			firstTentative = false
-			fmt.Println("Connessione... ", u.String())
+			log.Println("Connessione... ", u.String())
 		} else {
-			fmt.Println("Riconnessione... ", u.String())
+			log.Println("Riconnessione... ", u.String())
 		}
 
 		var err error
 		apiConnection, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 		if err != nil {
 			apiConnected = false
-			fmt.Println("Impossibile stabilire la connessione. Rifiuto persistente del computer di destinazione.")
+			log.Println("Impossibile stabilire la connessione. Rifiuto persistente del computer di destinazione.")
 			time.Sleep(4 * time.Second)
 			continue
 		}
 
-		fmt.Println("API Connesso")
+		log.Println("API Connesso")
 		break
 	}
 	apiConnected = true
@@ -137,7 +136,7 @@ func ConnectApi(api *url.URL, agent RestConfig) *websocket.Conn {
 func Boot(agent RestConfig) {
 	b, err := json.Marshal(agent)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Println("error:", err)
 	}
 	m := command{
 		Cmd:   "boot",
@@ -147,12 +146,12 @@ func Boot(agent RestConfig) {
 	}
 	j, err := json.Marshal(m)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	err = apiConnection.WriteMessage(websocket.TextMessage, j)
 	if err != nil {
-		fmt.Println("Errore scrittura: ", err)
+		log.Println("Errore scrittura: ", err)
 	}
 }
 
@@ -165,12 +164,12 @@ func Watcher(file string, agent RestConfig) {
 	}
 	j, err := json.Marshal(m)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	err = apiConnection.WriteMessage(websocket.TextMessage, j)
 	if err != nil {
-		fmt.Println("Errore scrittura: ", err)
+		log.Println("Errore scrittura: ", err)
 	}
 }
 
@@ -179,7 +178,7 @@ func Process() {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println("Errore di processo:", err)
+				log.Println("Errore di processo:", err)
 				apiConnected = false
 				apiConnection.Close()
 			}
@@ -189,14 +188,14 @@ func Process() {
 			if apiConnected {
 				_, message, err := apiConnection.ReadMessage()
 				if err != nil {
-					fmt.Println("Lettura WS:", err)
+					log.Println("Lettura WS:", err)
 				}
 				m := command{}
 				if err := json.Unmarshal(message, &m); err != nil {
-					fmt.Println(err)
+					log.Println(err)
 				}
 				if m.Cmd == "query" {
-					fmt.Printf("%s [%d]\nSQL %s\n", m.Agent, m.Id, m.Data)
+					log.Printf("%s [%d]\nSQL %s\n", m.Agent, m.Id, m.Data)
 					response := response{
 						Cmd:   m.Cmd,
 						Id:    m.Id,
@@ -211,12 +210,12 @@ func Process() {
 
 					j, err := json.Marshal(response)
 					if err != nil {
-						fmt.Println("Errore assemblaggio JSON:", err)
+						log.Println("Errore assemblaggio JSON:", err)
 					}
-					fmt.Printf("Lunghezza dati: %d\n------\n", len(data))
+					log.Printf("Lunghezza dati: %d\n------\n", len(data))
 					err = apiConnection.WriteMessage(websocket.TextMessage, j)
 					if err != nil {
-						fmt.Println("Scrittura WS:", err)
+						log.Println("Scrittura WS:", err)
 					}
 				}
 			}

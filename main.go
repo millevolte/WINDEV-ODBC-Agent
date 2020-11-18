@@ -2,32 +2,32 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"odbc/db"
 	"odbc/rest"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"
 )
 
-var watcher *fsnotify.Watcher
+// var watcher *fsnotify.Watcher
 
 // watchDir gets run as a walk func, searching for directories to add watchers to
-func watchDir(path string, fi os.FileInfo, err error) error {
+/* func watchDir(path string, fi os.FileInfo, err error) error {
 
 	// since fsnotify can watch all the files in a directory, watchers only need
 	// to be added to each nested directory
+	log.Println(path)
 	if fi.Mode().IsDir() {
 		return watcher.Add(path)
 	}
 
 	return nil
-}
+} */
 
 // our clean up procedure and exiting the program.
 func SetupCloseHandler() {
@@ -35,37 +35,48 @@ func SetupCloseHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		fmt.Println("\r- Ciao ci vediamo...")
+		log.Println("\r- Ciao ci vediamo...")
 		os.Exit(0)
 	}()
 }
 
 func main() {
 	// creates a new file watcher
-	watcher, _ = fsnotify.NewWatcher()
-	defer watcher.Close()
+	//watcher, _ = fsnotify.NewWatcher()
+	//defer watcher.Close()
+
+	f, err := os.OpenFile("odbc-welcome.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	defer f.Close()
+	log.SetOutput(f)
 
 	config, restConfig := rest.LoadConfig()
 
 	rest.UpdateDSN(restConfig.UUID, config.DB, config.Driver)
 
-	if err := filepath.Walk(config.DB, watchDir); err != nil {
-		fmt.Println("ERROR", err)
-	}
+	log.Println("DATABASE ", config.DB)
 
-	go func() {
-		for {
-			select {
-			// watch for events
-			case event := <-watcher.Events:
-				fmt.Printf("Watcher: %s\n", event.Name)
-				rest.Watcher(event.Name, restConfig)
-				// watch for errors
-			case err := <-watcher.Errors:
-				fmt.Println("WATCHER ERROR", err)
-			}
+	/*
+		if err := filepath.Walk(config.DB, watchDir); err != nil {
+			log.Println("ERROR", err)
 		}
-	}()
+
+		 	go func() {
+			for {
+				select {
+				// watch for events
+				case event := <-watcher.Events:
+					log.Printf("Watcher: %s\n", event.Name)
+					rest.Watcher(event.Name, restConfig)
+					// watch for errors
+				case err := <-watcher.Errors:
+					log.Println("WATCHER ERROR", err)
+				}
+			}
+		}() */
 
 	SetupCloseHandler()
 
@@ -94,7 +105,7 @@ func main() {
 	c := rest.ConnectApi(baseUrl, restConfig)
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("panic occurred:", err)
+			log.Println("panic occurred:", err)
 		}
 	}()
 
@@ -107,7 +118,7 @@ func main() {
 		case <-ticker.C:
 			connected, inProgress := rest.ConnectApiStatus()
 			if !connected {
-				fmt.Println("Not connected")
+				log.Println("Not connected")
 			}
 
 			if !connected && !inProgress {
@@ -119,7 +130,7 @@ func main() {
 			// waiting (with timeout) for the server to close the connection.
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
-				fmt.Println("write close:", err)
+				log.Println("write close:", err)
 			}
 			select {
 

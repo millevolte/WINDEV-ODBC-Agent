@@ -1,1 +1,1 @@
-{ "uuid": "869c026cd5c14891af41addcce3f86b4", "orionId": "000002", "orionSocId": "000033", "email": "pippo@pipponia.com", "societa": "pippone SA", "wssUrl": "ws://localhost:3000" }
+{ "uuid": "869c026cd5c14891af41addcce3f86b4", "orionId": "000002", "orionSocId": "000033", "email": "pippo@pipponia.com", "societa": "pippone SA", "wssUrl": "ws://localhost:8081" }

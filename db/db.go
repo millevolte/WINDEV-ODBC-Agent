@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -32,11 +33,11 @@ func OpenDB(DSN string) {
 func SqlSelect(query string) (map[int]map[string]string, error) {
 	rows, err := DB.Query(query, nil)
 	if err != nil {
-		fmt.Printf("error %v", err)
+		log.Printf("error %v", err)
 		return nil, err
 	}
 
-	fmt.Printf("%T", rows)
+	log.Printf("%T", rows)
 
 	cols, err := rows.Columns()
 	if err != nil {
@@ -64,7 +65,7 @@ func SqlSelect(query string) (map[int]map[string]string, error) {
 			switch t {
 			case "[]uint8":
 				v = string(DecodeISO8859(bytes.Trim(colassoc[col].([]byte), "\x00")))
-				v = strings.TrimSpace(v)
+				v = strings.TrimRight(v, " ")
 				break
 
 			case "float64":
@@ -99,10 +100,9 @@ func SqlSelect(query string) (map[int]map[string]string, error) {
 		result[rowNum] = colresult
 		rowNum++
 	}
-
 	// duration := time.Since(start)
 	// Formatted string, such as "2h3m0.5s" or "4.503μs"
-	// fmt.Println(duration)
+	// log.Println(duration)
 	rows.Close()
 	return result, nil
 }
@@ -117,7 +117,7 @@ func SqlQuery(query string) (map[int]map[string]string, error) {
 	var command = strings.ToUpper(commands[0])
 	// comando SQL acquisito
 	if command == "DELETE" || command == "UPDATE" {
-		// fmt.Printf("------\n%s\n------\n", command)
+		// log.Printf("------\n%s\n------\n", command)
 		result, err := DB.Exec(query, nil)
 		if err != nil {
 			return nil, err
@@ -126,7 +126,7 @@ func SqlQuery(query string) (map[int]map[string]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("AFFECTED ROWS %v\n", affected)
+		log.Printf("AFFECTED ROWS %v\n", affected)
 		data := make(map[int]map[string]string)
 		a := make(map[string]string)
 		a["affected"] = fmt.Sprintf("%d", affected)
@@ -138,15 +138,15 @@ func SqlQuery(query string) (map[int]map[string]string, error) {
 		queries := strings.Split(query, "|")
 		_, err := DB.Exec(queries[0], nil)
 		if err != nil {
-			fmt.Printf("Error result\n%v\n------\n", err)
+			log.Printf("Error result\n%v\n------\n", err)
 			return nil, err
 		}
 		start := time.Now()
 		if len(queries) > 1 {
 			result, err := SqlSelect(queries[1])
 			duration := time.Since(start)
-			fmt.Printf("\nSQL %s\n", queries[1])
-			fmt.Println(duration)
+			log.Printf("\nSQL %s\n", queries[1])
+			log.Println(duration)
 			return result, err
 		}
 

@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -11,17 +10,17 @@ import (
 func verifyDSNValues(DSN string, DB string, driver string) {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\ODBC\ODBC.INI\`+DSN, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	err = k.SetStringValue("Driver", driver)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	err = k.SetStringValue("Encryption", "")
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	err = k.SetStringValue("IntegrityCheck", "0")
@@ -30,18 +29,18 @@ func verifyDSNValues(DSN string, DB string, driver string) {
 	}
 	err = k.SetStringValue("PWDXX", "")
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	err = k.SetStringValue("RepFic", DB)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	t := time.Now()
 	err = k.SetStringValue("Updated", t.String())
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 
@@ -50,55 +49,55 @@ func verifyDSNValues(DSN string, DB string, driver string) {
 func verifyDSN(DSN string) bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
 		log.Fatal(err)
 	}
 	defer k.Close()
 	val, _, err := k.GetStringValue(DSN)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
 		log.Fatal(err)
 	}
 	if val == "HFSQL" {
-		fmt.Println(DSN + " NAME OK")
+		log.Println(DSN + " NAME OK")
 		return true
 	}
 	err = k.SetStringValue(DSN, "HFSQL")
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
 		log.Fatal(err)
 	}
-	fmt.Println(DSN + " ADDED SUCESSFULLY")
+	log.Println(DSN + " ADDED SUCESSFULLY")
 	return true
 }
 
 func setKeyValueDSN(DSN string) bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`, registry.QUERY_VALUE|registry.SET_VALUE)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
 		log.Fatal(err)
 	}
 	defer k.Close()
 	err = k.SetStringValue(DSN, "HFSQL")
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources`)
 		log.Fatal(err)
 	}
-	fmt.Println(DSN + " ADDED SUCESSFULLY")
+	log.Println(DSN + " ADDED SUCESSFULLY")
 	return true
 }
 
 func UpdateDSN(DSN string, DB string, driver string) bool {
 	k, err := registry.OpenKey(registry.CURRENT_USER, `SOFTWARE\ODBC\ODBC.INI`, registry.ENUMERATE_SUB_KEYS)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI`)
 		log.Fatal(err)
 	}
 	defer k.Close()
 
 	names, err := k.ReadSubKeyNames(-1)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI`)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI`)
 		log.Fatal(err)
 	}
 	for _, name := range names {
@@ -111,7 +110,7 @@ func UpdateDSN(DSN string, DB string, driver string) bool {
 	}
 	k2, _, err := registry.CreateKey(registry.CURRENT_USER, `SOFTWARE\ODBC\ODBC.INI\`+DSN, registry.ALL_ACCESS)
 	if err != nil {
-		fmt.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
+		log.Println(`Write registry error: .CURRENT_USER\SOFTWARE\ODBC\ODBC.INI\` + DSN)
 		log.Fatal(err)
 	}
 	k2.Close()
